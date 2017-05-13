@@ -1,10 +1,18 @@
 package com.rango.lucassouza.rango.Controller;
 
+import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -20,6 +28,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private Marker mMarker;
+    private int permission;
+    private static final int MY_LOCATION_REQUEST_CODE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +39,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.filtro);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -54,14 +65,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        permission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        //Verifica se tem permissão do mapa
+        if (permission == PackageManager.PERMISSION_GRANTED) {
+            mMap.setMyLocationEnabled(true);
+        } else {
+            ActivityCompat.requestPermissions(MapsActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_LOCATION_REQUEST_CODE);
 
-        // Add a marker in Sydney and move the camera
+            mMap.setMyLocationEnabled(true);
+        }
+
+        // Estabelecimento
         LatLng meuPonto = new LatLng(-23.5687111, -46.716003);
 
         mMarker = mMap.addMarker(new MarkerOptions().position(meuPonto).title("Dogão do Tio Lucas"));
         mMarker.showInfoWindow();
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(meuPonto));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(20));
+        //Localização atual
+        LocationManager locationManager = (LocationManager)
+                getSystemService(Context.LOCATION_SERVICE);
+        Criteria criteria = new Criteria();
+
+        Location location = locationManager.getLastKnownLocation(locationManager
+                .getBestProvider(criteria, false));
+        double latitude = location.getLatitude();
+        double longitude = location.getLongitude();
+        LatLng myLocation = new LatLng(latitude,longitude);
+        //Mover Câmera para minha localização
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(myLocation));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(17));
         mMap.setBuildingsEnabled(true);
         mMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
@@ -72,5 +105,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             }
         });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == MY_LOCATION_REQUEST_CODE) {
+            if (permissions.length == 1 &&
+                    permissions[0] == Manifest.permission.ACCESS_FINE_LOCATION &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            } else {
+                // Permission was denied. Display an error message.
+            }
+        }
     }
 }

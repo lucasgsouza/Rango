@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Rangô</string>
-    <string name="title_activity_maps">Map</string>
+    <string name="title_activity_maps">Rangô</string>
     <string name="title_activity_perfil_vendedor">Vendedor</string>
 
 </resources>
